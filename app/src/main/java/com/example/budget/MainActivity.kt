@@ -16,10 +16,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.budget.ui.theme.BudgetTheme
 
 class MainActivity : ComponentActivity() {
-    var smsServiceIntent = Intent(this, TextListenerService::class.java)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        var smsServiceIntent = Intent(this, TextListenerService::class.java)
         enableEdgeToEdge()
         setContent {
             BudgetTheme {

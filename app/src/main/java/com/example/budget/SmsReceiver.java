@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.telephony.SmsMessage;
+import android.util.Log;
 
 // copied from https://stackoverflow.com/q/39577427 so as not to waste time translating back and forth from Kotlin
 public class SmsReceiver extends BroadcastReceiver {
@@ -23,6 +24,8 @@ public class SmsReceiver extends BroadcastReceiver {
                     SmsMessage smsMessage = getIncomingMessage(pdu, extras);
                     telnr = smsMessage.getDisplayOriginatingAddress();
                     nachricht += smsMessage.getDisplayMessageBody();
+
+                    Log.i("TEST_TEXT", smsMessage.getDisplayMessageBody());
                 }
 
                 // Here the message content is processed within MainAct
