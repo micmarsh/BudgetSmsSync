@@ -23,31 +23,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BudgetTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    val m = Modifier.padding(innerPadding)
-                    Column {
-                        Greeting(name = "You", modifier = m)
-                        Text(text = "hello", modifier = m)
-                    }
-                }
+
             }
         }
-        startService(smsServiceIntent)
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    BudgetTheme {
-        Greeting("Dawg")
+        // startService(smsServiceIntent)
     }
 }
