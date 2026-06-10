@@ -1,5 +1,6 @@
 package com.micmarsh.budget
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -34,12 +35,21 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.core.DataStore
+import androidx.datastore.core.MultiProcessDataStoreFactory
 import com.micmarsh.budget.ui.theme.BudgetTheme
+import java.util.prefs.Preferences
 
 class MainActivity : ComponentActivity() {
 
+    val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name= "settings")
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+//        val dataStore = MultiProcessDataStoreFactory.create(
+//            storage = StorageTODO()
+//        )
+
         var smsServiceIntent = Intent(this, TextListenerService::class.java)
 
         setContent() {
