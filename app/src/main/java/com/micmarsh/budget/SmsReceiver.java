@@ -22,8 +22,6 @@ public abstract class SmsReceiver extends BroadcastReceiver {
 
         Bundle extras = intent.getExtras();
 
-        Log.i("TEST NON-CALLBACK", "onReceive fired!!!");
-
         if (extras != null) {
             Object[] pdus = (Object[]) extras.get("pdus");
             if (pdus != null) {
@@ -34,7 +32,6 @@ public abstract class SmsReceiver extends BroadcastReceiver {
                     nachricht += smsMessage.getDisplayMessageBody();
 
                     runAction(smsMessage);
-                    Log.i("TEST NON-CALLBACK", smsMessage.getDisplayMessageBody());
                 }
             }
         }
