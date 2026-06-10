@@ -55,7 +55,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        // startService(smsServiceIntent)
+
+         startService(smsServiceIntent)
     }
 }
 

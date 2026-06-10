@@ -6,10 +6,19 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.telephony.SmsMessage;
-import android.util.Log;
+
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 
 // copied from https://stackoverflow.com/q/39577427 so as not to waste time translating back and forth from Kotlin
 public class SmsReceiver extends BroadcastReceiver {
+
+    private final Function1<SmsMessage, Unit> runAction;
+
+    public SmsReceiver(Function1<SmsMessage, Unit> runAction){
+        this.runAction = runAction;
+    }
+    
     @Override
     public void onReceive(Context context, Intent intent) {
         String telnr = "", nachricht = "";
@@ -25,11 +34,8 @@ public class SmsReceiver extends BroadcastReceiver {
                     telnr = smsMessage.getDisplayOriginatingAddress();
                     nachricht += smsMessage.getDisplayMessageBody();
 
-                    Log.i("TEST_TEXT", smsMessage.getDisplayMessageBody());
+                    runAction.invoke(smsMessage);
                 }
-
-                // Here the message content is processed within MainAct
-                //MainAct.instance().processSMS(telnr.replace("+49", "0").replace(" ", ""), nachricht);
             }
         }
     }
