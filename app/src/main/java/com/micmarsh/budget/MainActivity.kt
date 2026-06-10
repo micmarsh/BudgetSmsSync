@@ -1,6 +1,5 @@
 package com.micmarsh.budget
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
@@ -34,27 +32,20 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.micmarsh.budget.ui.theme.BudgetTheme
 
 class MainActivity : ComponentActivity() {
 
-    val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name= "settings")
+    companion object {
 
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        val dataStore = MultiProcessDataStoreFactory.create(
-//            storage = StorageTODO()
-//        )
-
 
         val smsServiceIntent = Intent(this, TextListenerService::class.java)
-
-        val storage = Storage(dataStore)
+        val storage = SettingsStorage.create(this)
 
         setContent() {
             BudgetTheme {
@@ -73,10 +64,11 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun phoneNumberList(storage: Storage) {
+fun phoneNumberList(storage: SettingsStorage) {
     val numberInput = remember { mutableStateOf(TextFieldValue()) }
 
     Column {
+        Text(fontSize = 20.sp, text = "Phone Numbers to Monitor")
         textEntryRow(numberInput, storage)
         sourceNumberListView(storage)
     }
@@ -89,7 +81,7 @@ private val rowModifier = Modifier
 @Composable
 private fun textEntryRow(
     numberInput: MutableState<TextFieldValue>,
-    storage: Storage
+    storage: SettingsStorage
 ) {
     Row(rowModifier) { //todo these modifiers can /probably/ be "moved" to "stylesheet" (BudgetTheme)
         TextField(
@@ -127,19 +119,19 @@ private fun textEntryRow(
 }
 
 @Composable
-private fun sourceNumberListView(storage: Storage){
+private fun sourceNumberListView(storage: SettingsStorage){
     val sourceNumbers = storage.getPhoneNumbers().collectAsStateWithLifecycle(setOf())
         .value.toList()
 
     LazyColumn {
-        items(sourceNumbers) {item ->
+        items(items = sourceNumbers) {item ->
             Row(rowModifier
                 .wrapContentHeight(align = Alignment.CenterVertically)
                 .combinedClickable(
-                onLongClick = {
-                    storage.removePhoneNumber(item)
-                },
-                onClick = {})){
+                    onLongClick = {
+                        storage.removePhoneNumber(item)
+                    },
+                    onClick = {})){
                 Text(item)
             }
         }
