@@ -37,10 +37,6 @@ import com.micmarsh.budget.ui.theme.BudgetTheme
 
 class MainActivity : ComponentActivity() {
 
-    companion object {
-
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 

@@ -21,7 +21,7 @@ import okio.source
 import java.io.InputStream
 import java.io.OutputStream
 
-class SettingsStorage(val dataStore: DataStore<Preferences>) : ViewModel() {
+class SettingsStorage private constructor(val dataStore: DataStore<Preferences>) : ViewModel() {
     val PHONE_NUMBERS = stringSetPreferencesKey("phone_numbers")
 
     fun getPhoneNumbers() : Flow<Set<String>>{
