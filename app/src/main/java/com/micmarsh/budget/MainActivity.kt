@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -23,10 +24,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
@@ -36,13 +35,15 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.core.DataStore
-import androidx.datastore.core.MultiProcessDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.micmarsh.budget.ui.theme.BudgetTheme
-import java.util.prefs.Preferences
 
 class MainActivity : ComponentActivity() {
 
     val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name= "settings")
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,7 +51,10 @@ class MainActivity : ComponentActivity() {
 //            storage = StorageTODO()
 //        )
 
-        var smsServiceIntent = Intent(this, TextListenerService::class.java)
+
+        val smsServiceIntent = Intent(this, TextListenerService::class.java)
+
+        val storage = Storage(dataStore)
 
         setContent() {
             BudgetTheme {
@@ -59,7 +63,7 @@ class MainActivity : ComponentActivity() {
                         .padding(innerPadding)
                         .fillMaxSize()) {
                         Text(fontSize = 30.sp, text = "Settings")
-                        phoneNumberList()
+                        phoneNumberList(storage)
                     }
                 }
             }
@@ -69,15 +73,12 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun phoneNumberList() {
-    val sourceNumbers = remember {
-        mutableStateListOf<String>() // todo some (already) validated phone num domain type
-    }
+fun phoneNumberList(storage: Storage) {
     val numberInput = remember { mutableStateOf(TextFieldValue()) }
 
     Column {
-        textEntryRow(numberInput, sourceNumbers)
-        sourceNumberListView(sourceNumbers)
+        textEntryRow(numberInput, storage)
+        sourceNumberListView(storage)
     }
 }
 
@@ -88,7 +89,7 @@ private val rowModifier = Modifier
 @Composable
 private fun textEntryRow(
     numberInput: MutableState<TextFieldValue>,
-    sourceNumbers: SnapshotStateList<String>
+    storage: Storage
 ) {
     Row(rowModifier) { //todo these modifiers can /probably/ be "moved" to "stylesheet" (BudgetTheme)
         TextField(
@@ -113,7 +114,7 @@ private fun textEntryRow(
 
         Button(
             onClick = {
-                sourceNumbers.add(numberInput.value.text)
+                storage.addPhoneNumber(numberInput.value.text)
                 numberInput.value = TextFieldValue("")
             },
             modifier = Modifier
@@ -126,14 +127,17 @@ private fun textEntryRow(
 }
 
 @Composable
-private fun sourceNumberListView(sourceNumbers: SnapshotStateList<String>){
+private fun sourceNumberListView(storage: Storage){
+    val sourceNumbers = storage.getPhoneNumbers().collectAsStateWithLifecycle(setOf())
+        .value.toList()
+
     LazyColumn {
-        itemsIndexed(sourceNumbers){ index, item ->
+        items(sourceNumbers) {item ->
             Row(rowModifier
                 .wrapContentHeight(align = Alignment.CenterVertically)
                 .combinedClickable(
                 onLongClick = {
-                    sourceNumbers.removeAt(index)
+                    storage.removePhoneNumber(item)
                 },
                 onClick = {})){
                 Text(item)
