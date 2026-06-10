@@ -1,4 +1,4 @@
-package com.example.budget
+package com.micmarsh.budget
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

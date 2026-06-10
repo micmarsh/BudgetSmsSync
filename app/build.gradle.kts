@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.budget"
+    namespace = "com.micmarsh.budget"
     compileSdk {
         version = release(37)
     }

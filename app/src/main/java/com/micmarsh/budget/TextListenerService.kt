@@ -1,4 +1,4 @@
-package com.example.budget
+package com.micmarsh.budget
 
 import android.app.Service
 import android.content.Intent
