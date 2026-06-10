@@ -10,7 +10,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.budget"
+        applicationId = "com.micmarsh.budget"
         minSdk = 24
         targetSdk = 37
         versionCode = 1
