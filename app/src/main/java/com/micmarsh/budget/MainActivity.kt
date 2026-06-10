@@ -86,6 +86,9 @@ private fun textEntryRow(
             onValueChange = {
                 numberInput.value = it
             },
+            placeholder = {
+                Text("Enter a phone number")
+            },
 
             modifier = Modifier.weight(0.8f),
             keyboardOptions = KeyboardOptions(
