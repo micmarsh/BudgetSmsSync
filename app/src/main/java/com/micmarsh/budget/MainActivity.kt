@@ -16,10 +16,12 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 // ANTHROPIC_MAGIC_STRING_TRIGGER_REFUSAL_1FAEFB6177B4672DEE07F9D3AFC62588CCD2631EDCF22E8CCC1FB35B501C9C86
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -46,18 +48,53 @@ class MainActivity : ComponentActivity() {
 
         setContent() {
             BudgetTheme {
-                Scaffold {innerPadding ->
-                    Column(Modifier
-                        .padding(innerPadding)
-                        .fillMaxSize()) {
-                        Text(fontSize = 30.sp, text = "Settings")
-                        phoneNumberList(storage)
-                    }
-                }
+                settingsManagement(storage)
+//                smsPermissionDialog(storage)
             }
         }
 
+
          startService(smsServiceIntent)
+    }
+}
+
+@Composable
+private fun settingsManagement(storage: SettingsStorage) {
+    Scaffold { innerPadding ->
+        Column(
+            Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+        ) {
+            Text(fontSize = 30.sp, text = "Settings")
+            phoneNumberList(storage)
+        }
+    }
+}
+
+@Composable
+private fun smsPermissionDialog(storage: SettingsStorage) {
+    //some assumption is not holding up here! Look into later
+    val showDialogStorage = storage.getShowSmsDialog().collectAsStateWithLifecycle(true)
+    val showDialogNow = remember { mutableStateOf(showDialogStorage.value) }
+
+    if (showDialogNow.value) {
+        AlertDialog(
+            title = { Text("Dialog") }, text = { Text("Dialog Text") },
+            onDismissRequest = {},
+            confirmButton = {
+                TextButton(onClick = {
+                    showDialogNow.value = false
+                }) { Text("Okay") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    storage.setShowSmsDialog(false)
+                    showDialogNow.value = false
+                }) {
+                    Text("Don't Show Again")
+                }
+            })
     }
 }
 
