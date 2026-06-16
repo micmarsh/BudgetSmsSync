@@ -59,11 +59,31 @@ class SettingsStorage private constructor(val dataStore: DataStore<Preferences>)
         number: String,
         update: (set: Set<String>, item: String) -> Set<String>
     ){
+        updateSet(PHONE_NUMBERS, number, update)
+    }
+
+    private suspend fun updateSet(
+        key: Preferences.Key<Set<String>>,
+        number: String,
+        update: (set: Set<String>, item: String) -> Set<String>
+    ){
         dataStore.updateData { it.toMutablePreferences().also { preferences ->
-            val existing = preferences[PHONE_NUMBERS] ?: setOf()
-            preferences[PHONE_NUMBERS] = update(existing, number)
+            val existing = preferences[key] ?: setOf()
+            preferences[key] = update(existing, number)
         } }
     }
+
+    // FOR TESTING, JUST AN EASY PERSISTENCE IMPLEMENTATION
+    val TEST_TIMES_WORKER_RUN = stringSetPreferencesKey("worker_run")
+    fun getTestStrings() : Flow<Set<String>>{
+        return dataStore.data.map { it[TEST_TIMES_WORKER_RUN] ?: setOf() }
+    }
+    fun addTestString(time: String){
+        viewModelScope.launch {
+            updateSet(TEST_TIMES_WORKER_RUN, time) { set, item -> set.plus(item) }
+        }
+    }
+
 
     companion object {
 

@@ -1,6 +1,5 @@
 package com.micmarsh.budget
 
-import android.content.Intent
 import android.content.res.Resources
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -37,6 +36,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.WorkManager
 import com.micmarsh.budget.ui.theme.BudgetTheme
 
@@ -54,7 +54,10 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        WorkManager.getInstance(this).enqueue(SyncWorker.create())
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "sms_sync_worker",
+            ExistingPeriodicWorkPolicy.KEEP,
+            SyncWorker.create())
     }
 }
 
@@ -68,6 +71,8 @@ private fun settingsManagement(storage: SettingsStorage) {
         ) {
             Text(fontSize = 30.sp, text = "Settings")
             phoneNumberList(storage)
+
+            TEST_timesRunList(storage)
         }
     }
 }
@@ -166,6 +171,21 @@ private fun sourceNumberListView(storage: SettingsStorage){
                         storage.removePhoneNumber(item)
                     },
                     onClick = {})){
+                Text(item)
+            }
+        }
+    }
+}
+
+@Composable
+fun TEST_timesRunList(storage: SettingsStorage) {
+    val sourceNumbers = storage.getTestStrings().collectAsStateWithLifecycle(setOf())
+        .value.toList()
+
+    LazyColumn {
+        items(items = sourceNumbers) {item ->
+            Row(rowModifier
+                .wrapContentHeight(align = Alignment.CenterVertically)){
                 Text(item)
             }
         }
