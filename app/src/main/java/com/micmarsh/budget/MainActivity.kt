@@ -1,6 +1,7 @@
 package com.micmarsh.budget
 
 import android.content.Intent
+import android.content.res.Resources
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -45,11 +46,11 @@ class MainActivity : ComponentActivity() {
 
         val smsServiceIntent = Intent(this, TextListenerService::class.java)
         val storage = SettingsStorage.create(this)
-
+        val resources = this.resources
         setContent() {
             BudgetTheme {
                 settingsManagement(storage)
-                smsPermissionDialog(storage)
+                smsPermissionDialog(resources, storage)
             }
         }
 
@@ -73,14 +74,13 @@ private fun settingsManagement(storage: SettingsStorage) {
 }
 
 @Composable
-private fun smsPermissionDialog(storage: SettingsStorage) {
-    //todo some assumption is not holding up here! Look into later
+private fun smsPermissionDialog(resources: Resources, storage: SettingsStorage) {
     val showDialogStorage = storage.getShowSmsDialog().collectAsStateWithLifecycle(true)
     val showDialogTemp = remember { mutableStateOf(true) }
 
     if (showDialogStorage.value && showDialogTemp.value) {
         AlertDialog(
-            title = { Text("Dialog") }, text = { Text("Dialog Text") },
+            text = { Text(fontSize = 16.sp, text = resources.getString(R.string.permssions_dialog_content)) },
             onDismissRequest = {},
             confirmButton = {
                 TextButton(onClick = {
