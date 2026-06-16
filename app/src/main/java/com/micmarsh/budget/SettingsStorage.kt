@@ -23,31 +23,43 @@ import okio.source
 import java.io.InputStream
 import java.io.OutputStream
 
-class SettingsStorage private constructor(val dataStore: DataStore<Preferences>) : ViewModel() {
+interface PhoneNumberStorage {
+    fun getPhoneNumbers() : Flow<Set<String>>
+    fun addPhoneNumber(number: String): Unit
+    fun removePhoneNumber(number: String): Unit
+}
+
+interface SmsDialogStorage {
+    fun getShowSmsDialog() : Flow<Boolean>
+    fun setShowSmsDialog(setting: Boolean): Unit
+}
+
+class SettingsStorage private constructor(val dataStore: DataStore<Preferences>)
+    : ViewModel(), PhoneNumberStorage, SmsDialogStorage {
     val PHONE_NUMBERS = stringSetPreferencesKey("phone_numbers")
     var SHOW_SMS_SETTINGS_DIALOG = booleanPreferencesKey("show_sms_dialog")
 
-    fun getPhoneNumbers() : Flow<Set<String>>{
+    override fun getPhoneNumbers() : Flow<Set<String>>{
         return dataStore.data.map { it[PHONE_NUMBERS] ?: setOf() }
     }
 
-    fun addPhoneNumber(number: String){
+    override fun addPhoneNumber(number: String){
         viewModelScope.launch {
             updateSet(number) { set, item -> set.plus(item) }
         }
     }
 
-    fun removePhoneNumber(number: String){
+    override fun removePhoneNumber(number: String){
         viewModelScope.launch {
             updateSet(number) { set, item -> set.minus(item) }
         }
     }
 
-    fun getShowSmsDialog() : Flow<Boolean> {
+    override fun getShowSmsDialog() : Flow<Boolean> {
         return dataStore.data.map { it[SHOW_SMS_SETTINGS_DIALOG] ?: true}
     }
 
-    fun setShowSmsDialog(setting: Boolean){
+   override fun setShowSmsDialog(setting: Boolean){
         viewModelScope.launch {
             dataStore.updateData { it.toMutablePreferences().also { preferences ->
                 preferences[SHOW_SMS_SETTINGS_DIALOG] = setting
@@ -120,4 +132,9 @@ class SettingsStorage private constructor(val dataStore: DataStore<Preferences>)
             }
         }
     }
+}
+
+interface TestStorage {
+    fun getTestStrings() : Flow<Set<String>>
+    fun addTestString(time: String) : Unit
 }

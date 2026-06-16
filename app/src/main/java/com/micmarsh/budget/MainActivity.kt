@@ -61,6 +61,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+//todo argument to interface once done testing
 @Composable
 private fun settingsManagement(storage: SettingsStorage) {
     Scaffold { innerPadding ->
@@ -78,7 +79,7 @@ private fun settingsManagement(storage: SettingsStorage) {
 }
 
 @Composable
-private fun smsPermissionDialog(resources: Resources, storage: SettingsStorage) {
+private fun smsPermissionDialog(resources: Resources, storage: SmsDialogStorage) {
     val showDialogStorage = storage.getShowSmsDialog().collectAsStateWithLifecycle(true)
     val showDialogTemp = remember { mutableStateOf(true) }
 
@@ -103,7 +104,7 @@ private fun smsPermissionDialog(resources: Resources, storage: SettingsStorage) 
 }
 
 @Composable
-fun phoneNumberList(storage: SettingsStorage) {
+fun phoneNumberList(storage: PhoneNumberStorage) {
     val numberInput = remember { mutableStateOf(TextFieldValue()) }
 
     Column {
@@ -120,7 +121,7 @@ private val rowModifier = Modifier
 @Composable
 private fun textEntryRow(
     numberInput: MutableState<TextFieldValue>,
-    storage: SettingsStorage
+    storage: PhoneNumberStorage
 ) {
     Row(rowModifier) { //todo these modifiers can /probably/ be "moved" to "stylesheet" (BudgetTheme)
         TextField(
@@ -158,7 +159,7 @@ private fun textEntryRow(
 }
 
 @Composable
-private fun sourceNumberListView(storage: SettingsStorage){
+private fun sourceNumberListView(storage: PhoneNumberStorage){
     val sourceNumbers = storage.getPhoneNumbers().collectAsStateWithLifecycle(setOf())
         .value.toList()
 
