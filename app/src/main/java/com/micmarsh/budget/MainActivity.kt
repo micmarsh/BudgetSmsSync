@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
         setContent() {
             BudgetTheme {
                 settingsManagement(storage)
-//                smsPermissionDialog(storage)
+                smsPermissionDialog(storage)
             }
         }
 
@@ -74,23 +74,23 @@ private fun settingsManagement(storage: SettingsStorage) {
 
 @Composable
 private fun smsPermissionDialog(storage: SettingsStorage) {
-    //some assumption is not holding up here! Look into later
+    //todo some assumption is not holding up here! Look into later
     val showDialogStorage = storage.getShowSmsDialog().collectAsStateWithLifecycle(true)
-    val showDialogNow = remember { mutableStateOf(showDialogStorage.value) }
+    val showDialogTemp = remember { mutableStateOf(true) }
 
-    if (showDialogNow.value) {
+    if (showDialogStorage.value && showDialogTemp.value) {
         AlertDialog(
             title = { Text("Dialog") }, text = { Text("Dialog Text") },
             onDismissRequest = {},
             confirmButton = {
                 TextButton(onClick = {
-                    showDialogNow.value = false
+                    showDialogTemp.value = false
                 }) { Text("Okay") }
             },
             dismissButton = {
                 TextButton(onClick = {
                     storage.setShowSmsDialog(false)
-                    showDialogNow.value = false
+                    showDialogTemp.value = false
                 }) {
                     Text("Don't Show Again")
                 }
