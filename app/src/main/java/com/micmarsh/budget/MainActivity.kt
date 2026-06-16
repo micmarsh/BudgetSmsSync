@@ -37,6 +37,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.work.WorkManager
 import com.micmarsh.budget.ui.theme.BudgetTheme
 
 class MainActivity : ComponentActivity() {
@@ -44,7 +45,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val smsServiceIntent = Intent(this, TextListenerService::class.java)
         val storage = SettingsStorage.create(this)
         val resources = this.resources
         setContent() {
@@ -54,8 +54,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-
-         startService(smsServiceIntent)
+        WorkManager.getInstance(this).enqueue(SyncWorker.create())
     }
 }
 

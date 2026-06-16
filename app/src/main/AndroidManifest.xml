@@ -22,9 +22,12 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity> 
-        <service android:name=".TextListenerService">
-        </service>
+        </activity>
+        <receiver android:name=".TextListenerReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
     </application>
     <uses-feature
         android:name="android.hardware.telephony"

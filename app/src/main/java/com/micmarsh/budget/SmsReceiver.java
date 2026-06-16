@@ -6,10 +6,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.telephony.SmsMessage;
-import android.util.Log;
-
 import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
 
 // copied from https://stackoverflow.com/q/39577427 so as not to waste time translating back and forth from Kotlin
 public abstract class SmsReceiver extends BroadcastReceiver {
@@ -18,6 +15,10 @@ public abstract class SmsReceiver extends BroadcastReceiver {
     
     @Override
     public void onReceive(Context context, Intent intent) {
+
+        if(! intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED"))
+            return;
+        
         String telnr = "", nachricht = "";
 
         Bundle extras = intent.getExtras();

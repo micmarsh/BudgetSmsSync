@@ -9,18 +9,11 @@ import android.util.Log
 
 class TextListenerService : Service() {
 
-    //todo this can probably just be a lambda passed into constructor, but get running for now
-    private class Receiver : SmsReceiver() {
-        override fun runAction(message: SmsMessage?) {
-            Log.i("TEST MESSAGES", "RECEIVED MESSAGE ${message?.messageBody}")
-        }
-    }
-
     override fun onBind(p0: Intent?): IBinder? {
         return null
     }
 
-    private val receiver = Receiver()
+    private val receiver = TextListenerReceiver()
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.i("YES", "REGISTERING TEXT RECEIVER")
@@ -31,5 +24,11 @@ class TextListenerService : Service() {
     override fun onDestroy() {
         unregisterReceiver(receiver)
         super.onDestroy()
+    }
+}
+
+class TextListenerReceiver : SmsReceiver() {
+    override fun runAction(message: SmsMessage?) {
+        Log.i("TEST MESSAGES", "RECEIVED MESSAGE ${message?.messageBody}")
     }
 }
