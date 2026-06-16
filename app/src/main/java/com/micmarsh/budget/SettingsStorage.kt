@@ -6,6 +6,7 @@ import androidx.datastore.core.Serializer
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.PreferencesSerializer
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.lifecycle.ViewModel
@@ -22,6 +23,7 @@ import okio.sink
 import okio.source
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.Date
 
 interface PhoneNumberStorage {
     fun getPhoneNumbers() : Flow<Set<String>>
@@ -34,10 +36,17 @@ interface SmsDialogStorage {
     fun setShowSmsDialog(setting: Boolean): Unit
 }
 
+interface LastSyncDateStorage {
+    fun getLastSyncDate() : Flow<Date>
+    suspend fun setLastSyncDate(date: Date): Unit
+}
+
 class SettingsStorage private constructor(val dataStore: DataStore<Preferences>)
-    : ViewModel(), PhoneNumberStorage, SmsDialogStorage {
+    : ViewModel(), PhoneNumberStorage, SmsDialogStorage, LastSyncDateStorage, TestStorage {
     val PHONE_NUMBERS = stringSetPreferencesKey("phone_numbers")
     var SHOW_SMS_SETTINGS_DIALOG = booleanPreferencesKey("show_sms_dialog")
+    val LAST_SYNC_DATE_LONG = longPreferencesKey("last_sync_date")
+
 
     override fun getPhoneNumbers() : Flow<Set<String>>{
         return dataStore.data.map { it[PHONE_NUMBERS] ?: setOf() }
@@ -45,13 +54,13 @@ class SettingsStorage private constructor(val dataStore: DataStore<Preferences>)
 
     override fun addPhoneNumber(number: String){
         viewModelScope.launch {
-            updateSet(number) { set, item -> set.plus(item) }
+            updateSet { set -> set.plus(number) }
         }
     }
 
     override fun removePhoneNumber(number: String){
         viewModelScope.launch {
-            updateSet(number) { set, item -> set.minus(item) }
+            updateSet { set -> set.minus(number) }
         }
     }
 
@@ -68,34 +77,30 @@ class SettingsStorage private constructor(val dataStore: DataStore<Preferences>)
     }
 
     private suspend fun updateSet(
-        number: String,
-        update: (set: Set<String>, item: String) -> Set<String>
+        update: (set: Set<String>) -> Set<String>
     ){
-        updateSet(PHONE_NUMBERS, number, update)
+        updateSet(PHONE_NUMBERS, update)
     }
 
     private suspend fun updateSet(
         key: Preferences.Key<Set<String>>,
-        number: String,
-        update: (set: Set<String>, item: String) -> Set<String>
+        update: (set: Set<String>) -> Set<String>
     ){
         dataStore.updateData { it.toMutablePreferences().also { preferences ->
             val existing = preferences[key] ?: setOf()
-            preferences[key] = update(existing, number)
+            preferences[key] = update(existing)
         } }
     }
 
-    // FOR TESTING, JUST AN EASY PERSISTENCE IMPLEMENTATION
-    val TEST_TIMES_WORKER_RUN = stringSetPreferencesKey("worker_run")
-    fun getTestStrings() : Flow<Set<String>>{
-        return dataStore.data.map { it[TEST_TIMES_WORKER_RUN] ?: setOf() }
-    }
-    fun addTestString(time: String){
-        viewModelScope.launch {
-            updateSet(TEST_TIMES_WORKER_RUN, time) { set, item -> set.plus(item) }
-        }
+    override fun getLastSyncDate(): Flow<Date> {
+        return dataStore.data.map { Date(it[LAST_SYNC_DATE_LONG] ?: 0)  }
     }
 
+    override suspend fun setLastSyncDate(date: Date) {
+        dataStore.updateData { it.toMutablePreferences().also { preferences ->
+            preferences[LAST_SYNC_DATE_LONG] = date.time
+        } }
+    }
 
     companion object {
 
@@ -132,9 +137,26 @@ class SettingsStorage private constructor(val dataStore: DataStore<Preferences>)
             }
         }
     }
+
+    // FOR TESTING, JUST AN EASY PERSISTENCE IMPLEMENTATION
+    val TEST_TIMES_WORKER_RUN = stringSetPreferencesKey("worker_run")
+    override fun getTestStrings() : Flow<Set<String>>{
+        return dataStore.data.map { it[TEST_TIMES_WORKER_RUN] ?: setOf() }
+    }
+    override fun addTestString(time: String){
+        viewModelScope.launch {
+            updateSet(TEST_TIMES_WORKER_RUN) { set -> set.plus(time) }
+        }
+    }
+    override fun addTestStrings(strs: List<String>){
+        viewModelScope.launch {
+            updateSet(TEST_TIMES_WORKER_RUN) { set -> set.plus(strs) }
+        }
+    }
 }
 
 interface TestStorage {
     fun getTestStrings() : Flow<Set<String>>
     fun addTestString(time: String) : Unit
+    fun addTestStrings(strs: List<String>) : Unit
 }
