@@ -17,6 +17,7 @@ import org.http4k.core.Request
 import org.http4k.core.Method.POST
 import org.http4k.core.with
 import org.http4k.format.Jackson
+import com.micmarsh.budget.Database;
 
 private val MESSAGE_BODY = "sms_message_body"
 private val MESSAGE_SENDER = "sms_message_sender"
@@ -47,7 +48,7 @@ class ReceivedTextWorker(val context: Context, val params: WorkerParameters) : C
         val data = params.inputData
         Log.i("TEST RUNNING WORKER FROM RECEIVER", "${data.getString(MESSAGE_SENDER)}: ${data.getString(MESSAGE_BODY)}")
 
-        val dbDriver: SqlDriver = AndroidSqliteDriver(Database.Schema, context, "sms_sync.db")
+        val database = Database(AndroidSqliteDriver(Database.Schema, context, "sms_sync.db"))
 
 
         val client = OkHttp()

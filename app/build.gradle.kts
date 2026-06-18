@@ -75,7 +75,7 @@ dependencies {
 sqldelight {
     databases {
         register("Database") {
-            packageName.set("com.micmarsh")
+            packageName.set("com.micmarsh.budget")
         }
     }
 }
