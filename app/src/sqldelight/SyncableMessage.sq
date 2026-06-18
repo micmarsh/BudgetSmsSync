@@ -1,0 +1,6 @@
+CREATE TABLE syncableMessage (
+    body TEXT PRIMARY KEY NOT NULL,
+    sender TEST NOT NULL,
+    timestamp BIGINT,
+    sync_status TINYINT
+)

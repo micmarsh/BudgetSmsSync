@@ -11,7 +11,7 @@ import kotlin.Unit;
 // copied from https://stackoverflow.com/q/39577427 so as not to waste time translating back and forth from Kotlin
 public abstract class SmsReceiver extends BroadcastReceiver {
 
-    public abstract Unit runAction(SmsMessage message);
+    public abstract Unit runAction(Context context, SmsMessage message);
     
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -32,7 +32,7 @@ public abstract class SmsReceiver extends BroadcastReceiver {
                     telnr = smsMessage.getDisplayOriginatingAddress();
                     nachricht += smsMessage.getDisplayMessageBody();
 
-                    runAction(smsMessage);
+                    runAction(context, smsMessage);
                 }
             }
         }

@@ -32,3 +32,8 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+test_api/venv/
+test_api/.venv/
+test_api/__pycache__/
+test_api/*.pdf
