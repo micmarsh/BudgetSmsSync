@@ -1,6 +1,20 @@
 CREATE TABLE syncableMessage (
-    body TEXT PRIMARY KEY NOT NULL,
-    sender TEST NOT NULL,
+    body TEXT NOT NULL,
+    sender TEXT NOT NULL,
     timestamp BIGINT,
     sync_status TINYINT
-)
+);
+
+CREATE UNIQUE INDEX syncableMessage_body ON syncableMessage(body);
+
+selectAll:
+SELECT * FROM syncableMessage;
+
+addUnsynced:
+INSERT INTO syncableMessage (sender, body, timestamp, sync_status)
+VALUES (?, ?, ?, 1);
+
+updateStatus:
+UPDATE syncableMessage
+SET sync_status = ?
+WHERE rowid = ?;
