@@ -10,6 +10,8 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import app.cash.sqldelight.db.SqlDriver
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import org.http4k.client.OkHttp
 import org.http4k.core.Request
 import org.http4k.core.Method.POST
@@ -40,15 +42,16 @@ class TextListenerReceiver : SmsReceiver() {
 
 data class SyncInput(val message_text: String?)
 
-class ReceivedTextWorker(appContext: Context, val params: WorkerParameters) : CoroutineWorker(appContext, params) {
+class ReceivedTextWorker(val context: Context, val params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val data = params.inputData
         Log.i("TEST RUNNING WORKER FROM RECEIVER", "${data.getString(MESSAGE_SENDER)}: ${data.getString(MESSAGE_BODY)}")
 
+        val dbDriver: SqlDriver = AndroidSqliteDriver(Database.Schema, context, "sms_sync.db")
+
+
         val client = OkHttp()
 
-        //todo shared "static" property
-        val bodyLens = Jackson.autoBody<SyncInput>().toLens()
         val request = Request(POST, "http://192.168.0.11:8000/sync_message_text")
             .header("Content-Type", "application/json")
             .with(bodyLens.of(SyncInput(data.getString(MESSAGE_BODY))))
@@ -58,5 +61,9 @@ class ReceivedTextWorker(appContext: Context, val params: WorkerParameters) : Co
         Log.i("TEST RESPONSE FROM SERVER", response.body.toString())
 
         return Result.success()
+    }
+
+    companion object {
+        private val bodyLens = Jackson.autoBody<SyncInput>().toLens()
     }
 }
