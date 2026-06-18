@@ -1,8 +1,8 @@
 CREATE TABLE syncableMessage (
     body TEXT NOT NULL,
     sender TEXT NOT NULL,
-    timestamp BIGINT,
-    sync_status TINYINT
+    timestamp INTEGER, -- BIGINT/LONG
+    sync_status INTEGER -- TINYINT
 );
 
 CREATE UNIQUE INDEX syncableMessage_body ON syncableMessage(body);

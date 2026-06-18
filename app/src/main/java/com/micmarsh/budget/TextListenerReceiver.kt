@@ -10,7 +10,6 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import org.http4k.client.OkHttp
 import org.http4k.core.Request
@@ -49,7 +48,6 @@ class ReceivedTextWorker(val context: Context, val params: WorkerParameters) : C
         Log.i("TEST RUNNING WORKER FROM RECEIVER", "${data.getString(MESSAGE_SENDER)}: ${data.getString(MESSAGE_BODY)}")
 
         val database = Database(AndroidSqliteDriver(Database.Schema, context, "sms_sync.db"))
-
 
         val client = OkHttp()
 
