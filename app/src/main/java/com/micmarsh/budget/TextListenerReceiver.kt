@@ -29,7 +29,7 @@ class TextListenerReceiver : SmsReceiver() {
         val timestamp = message.timestampMillis
 
         val db = SyncableMessageRepository.create(context)
-        val insertedId = db.insert(sender, body, timestamp)
+        val insertedId = db.addUnsynced(sender, body, timestamp)
 
         val workerPayload = Data.Builder()
             .putString(MESSAGE_BODY, body)
@@ -55,6 +55,7 @@ class ReceivedTextWorker(val context: Context, val params: WorkerParameters) : C
         val sender = data.getString(MESSAGE_SENDER)!!
         val body = data.getString(MESSAGE_BODY)!!
         val timestamp = data.getLong(MESSAGE_TIMESTAMP, -1) // todo error on this value?
+        val repo = SyncableMessageRepository.create(context)
 
 
         val client = OkHttp()
@@ -64,12 +65,17 @@ class ReceivedTextWorker(val context: Context, val params: WorkerParameters) : C
             .with(bodyLens.of(SyncInput(body)))
 
         val response = client(request)
-
-
+        
+        if (response.status.successful){
+            repo.markSuccessful(data.getLong(MESSAGE_DB_ID, -1))
+            return Result.success()
+        } else {
+            repo.markFailed(data.getLong(MESSAGE_DB_ID, -1))
+            return Result.retry() // todo retry policy in builder (and builder into own method)
+        }
 
         Log.i("TEST RESPONSE FROM SERVER", response.body.toString())
 
-        return Result.success()
     }
 
     companion object {

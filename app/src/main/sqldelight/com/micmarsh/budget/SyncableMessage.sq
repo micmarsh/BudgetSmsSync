@@ -2,7 +2,8 @@ CREATE TABLE IF NOT EXISTS syncableMessage (
     body TEXT NOT NULL,
     sender TEXT NOT NULL,
     timestamp INTEGER, -- BIGINT/LONG
-    sync_status INTEGER -- TINYINT
+    sync_status INTEGER, -- TINYINT
+    last_error TEXT
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS syncableMessage_body ON syncableMessage(body);
@@ -12,7 +13,7 @@ SELECT * FROM syncableMessage;
 
 addUnsynced:
 INSERT INTO syncableMessage (sender, body, timestamp, sync_status)
-VALUES (?, ?, ?, 1);
+VALUES (?, ?, ?, ?);
 
 updateStatus:
 UPDATE syncableMessage
