@@ -49,9 +49,8 @@ class ReceivedTextWorker(val context: Context, val params: WorkerParameters) : C
         val timestamp = data.getLong(MESSAGE_TIMESTAMP, -1) // todo error on this value?
 
         Log.i("TEST RUNNING WORKER FROM RECEIVER", "$sender: $body")
-
-        val database = Database(AndroidSqliteDriver(Database.Schema, context, "sms_sync.db"))
-        var insertedId = insert(database, sender, body, timestamp)
+        val db = DatabaseStorage.create(context)
+        val insertedId = db.insert(sender, body, timestamp)
 
 
         val client = OkHttp()
@@ -68,16 +67,6 @@ class ReceivedTextWorker(val context: Context, val params: WorkerParameters) : C
     }
 
     companion object {
-        fun insert(database: Database, sender: String, body: String, timestamp: Long) : Long {
-            return database.syncableMessageQueries.transactionWithResult {
-                database.syncableMessageQueries.addUnsynced(
-                    sender = sender,
-                    body = body,
-                    timestamp = timestamp)
-                database.syncableMessageQueries.lastId().executeAsOne()
-            }
-        }
-        
         private val bodyLens = Jackson.autoBody<SyncInput>().toLens()
     }
 }
