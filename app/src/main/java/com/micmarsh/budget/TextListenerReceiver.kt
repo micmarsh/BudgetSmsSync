@@ -19,18 +19,27 @@ import org.http4k.format.Jackson
 private val MESSAGE_BODY = "sms_message_body"
 private val MESSAGE_SENDER = "sms_message_sender"
 private val MESSAGE_TIMESTAMP = "sms_message_date"
+private val MESSAGE_DB_ID = "sms_message_db_id"
+
 
 class TextListenerReceiver : SmsReceiver() {
     override fun runAction(context: Context, message: SmsMessage) {
+        val body = message.messageBody
+        val sender = message.originatingAddress ?: "unknown"
+        val timestamp = message.timestampMillis
+
+        val db = SyncableMessageRepository.create(context)
+        val insertedId = db.insert(sender, body, timestamp)
+
         val workerPayload = Data.Builder()
-            .putString(MESSAGE_BODY, message.messageBody)
-            .putString(MESSAGE_SENDER, message.originatingAddress)
-            .putLong(MESSAGE_TIMESTAMP, message.timestampMillis)
+            .putString(MESSAGE_BODY, body)
+            .putString(MESSAGE_SENDER, sender)
+            .putLong(MESSAGE_TIMESTAMP, timestamp)
+            .putLong(MESSAGE_DB_ID, insertedId)
             .build()
 
         val workRequest = OneTimeWorkRequestBuilder<ReceivedTextWorker>()
             .setInputData(workerPayload)
-            //TODO introduce two workers!? first sticks in db, doesn't need unmetered, then dispatches to actual sync request that does
             .setConstraints(Constraints(requiredNetworkType = NetworkType.UNMETERED))
             .build()
 
@@ -47,10 +56,6 @@ class ReceivedTextWorker(val context: Context, val params: WorkerParameters) : C
         val body = data.getString(MESSAGE_BODY)!!
         val timestamp = data.getLong(MESSAGE_TIMESTAMP, -1) // todo error on this value?
 
-        Log.i("TEST RUNNING WORKER FROM RECEIVER", "$sender: $body")
-        val db = SyncableMessageRepository.create(context)
-        val insertedId = db.insert(sender, body, timestamp)
-
 
         val client = OkHttp()
 
@@ -59,6 +64,8 @@ class ReceivedTextWorker(val context: Context, val params: WorkerParameters) : C
             .with(bodyLens.of(SyncInput(body)))
 
         val response = client(request)
+
+
 
         Log.i("TEST RESPONSE FROM SERVER", response.body.toString())
 
