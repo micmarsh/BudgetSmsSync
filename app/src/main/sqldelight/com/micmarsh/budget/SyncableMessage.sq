@@ -1,11 +1,11 @@
-CREATE TABLE syncableMessage (
+CREATE TABLE IF NOT EXISTS syncableMessage (
     body TEXT NOT NULL,
     sender TEXT NOT NULL,
     timestamp INTEGER, -- BIGINT/LONG
     sync_status INTEGER -- TINYINT
 );
 
-CREATE UNIQUE INDEX syncableMessage_body ON syncableMessage(body);
+CREATE UNIQUE INDEX IF NOT EXISTS syncableMessage_body ON syncableMessage(body);
 
 selectAll:
 SELECT * FROM syncableMessage;
@@ -18,3 +18,6 @@ updateStatus:
 UPDATE syncableMessage
 SET sync_status = ?
 WHERE rowid = ?;
+
+lastId:
+SELECT last_insert_rowid();

@@ -16,7 +16,6 @@ import org.http4k.core.Request
 import org.http4k.core.Method.POST
 import org.http4k.core.with
 import org.http4k.format.Jackson
-import com.micmarsh.budget.Database;
 
 private val MESSAGE_BODY = "sms_message_body"
 private val MESSAGE_SENDER = "sms_message_sender"
@@ -45,15 +44,21 @@ data class SyncInput(val message_text: String?)
 class ReceivedTextWorker(val context: Context, val params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val data = params.inputData
-        Log.i("TEST RUNNING WORKER FROM RECEIVER", "${data.getString(MESSAGE_SENDER)}: ${data.getString(MESSAGE_BODY)}")
+        val sender = data.getString(MESSAGE_SENDER)!!
+        val body = data.getString(MESSAGE_BODY)!!
+        val timestamp = data.getLong(MESSAGE_TIMESTAMP, -1) // todo error on this value?
+
+        Log.i("TEST RUNNING WORKER FROM RECEIVER", "$sender: $body")
 
         val database = Database(AndroidSqliteDriver(Database.Schema, context, "sms_sync.db"))
+        var insertedId = insert(database, sender, body, timestamp)
+
 
         val client = OkHttp()
 
         val request = Request(POST, "http://192.168.0.11:8000/sync_message_text")
             .header("Content-Type", "application/json")
-            .with(bodyLens.of(SyncInput(data.getString(MESSAGE_BODY))))
+            .with(bodyLens.of(SyncInput(body)))
 
         val response = client(request)
 
@@ -63,6 +68,16 @@ class ReceivedTextWorker(val context: Context, val params: WorkerParameters) : C
     }
 
     companion object {
+        fun insert(database: Database, sender: String, body: String, timestamp: Long) : Long {
+            return database.syncableMessageQueries.transactionWithResult {
+                database.syncableMessageQueries.addUnsynced(
+                    sender = sender,
+                    body = body,
+                    timestamp = timestamp)
+                database.syncableMessageQueries.lastId().executeAsOne()
+            }
+        }
+        
         private val bodyLens = Jackson.autoBody<SyncInput>().toLens()
     }
 }
