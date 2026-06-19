@@ -4,7 +4,7 @@ import android.content.Context
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 
 
-class DatabaseStorage(val database: Database) {
+class SyncableMessageRepository(val database: Database) {
 
     fun insert(sender: String, body: String, timestamp: Long) : Long {
         return database.syncableMessageQueries.transactionWithResult {
@@ -17,9 +17,9 @@ class DatabaseStorage(val database: Database) {
     }
 
     companion object {
-        fun create(context: Context) : DatabaseStorage {
+        fun create(context: Context) : SyncableMessageRepository {
             val database = Database(AndroidSqliteDriver(Database.Schema, context, "sms_sync.db"))
-            return DatabaseStorage(database)
+            return SyncableMessageRepository(database)
         }
     }
 }

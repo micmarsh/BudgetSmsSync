@@ -10,7 +10,6 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import org.http4k.client.OkHttp
 import org.http4k.core.Request
 import org.http4k.core.Method.POST
@@ -49,7 +48,7 @@ class ReceivedTextWorker(val context: Context, val params: WorkerParameters) : C
         val timestamp = data.getLong(MESSAGE_TIMESTAMP, -1) // todo error on this value?
 
         Log.i("TEST RUNNING WORKER FROM RECEIVER", "$sender: $body")
-        val db = DatabaseStorage.create(context)
+        val db = SyncableMessageRepository.create(context)
         val insertedId = db.insert(sender, body, timestamp)
 
 
