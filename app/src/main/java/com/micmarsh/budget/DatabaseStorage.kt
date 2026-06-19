@@ -1,5 +1,8 @@
 package com.micmarsh.budget
 
+import android.content.Context
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+
 
 class DatabaseStorage(val database: Database) {
 
@@ -16,7 +19,7 @@ class DatabaseStorage(val database: Database) {
     companion object {
         fun create(context: Context) : DatabaseStorage {
             val database = Database(AndroidSqliteDriver(Database.Schema, context, "sms_sync.db"))
-            return DatabaseStroage(database)
+            return DatabaseStorage(database)
         }
     }
 }
