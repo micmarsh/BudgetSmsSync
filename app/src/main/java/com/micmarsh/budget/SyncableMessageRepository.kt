@@ -1,10 +1,21 @@
 package com.micmarsh.budget
 
 import android.content.Context
+import androidx.lifecycle.ViewModel
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 
 
 class SyncableMessageRepository(val database: Database) {
+
+    fun getAll() : Flow<List<SyncableMessage>>{
+        return database.syncableMessageQueries.selectAll()
+            .asFlow()
+            .mapToList(Dispatchers.IO)
+    }
 
     fun addUnsynced(sender: String, body: String, timestamp: Long) : Long {
         return database.syncableMessageQueries.transactionWithResult {
@@ -22,8 +33,14 @@ class SyncableMessageRepository(val database: Database) {
             rowid = id)
     }
 
-    fun markFailed(id: Long){
-        database.syncableMessageQueries.updateStatus(sync_status = SyncStatus.Failed.value.toLong(),
+    fun markPending(id: Long){
+        database.syncableMessageQueries.updateStatus(sync_status = SyncStatus.Pending.value.toLong(),
+            rowid = id)
+    }
+
+    fun markFailed(id: Long, message: String){
+        database.syncableMessageQueries.updateStatusWithError(sync_status = SyncStatus.Failed.value.toLong(),
+            last_error = message,
             rowid = id)
     }
 

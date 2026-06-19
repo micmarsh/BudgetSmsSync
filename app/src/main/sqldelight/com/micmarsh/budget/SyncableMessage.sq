@@ -11,13 +11,19 @@ CREATE UNIQUE INDEX IF NOT EXISTS syncableMessage_body ON syncableMessage(body);
 selectAll:
 SELECT * FROM syncableMessage;
 
-addUnsynced:
+add:
 INSERT INTO syncableMessage (sender, body, timestamp, sync_status)
 VALUES (?, ?, ?, ?);
 
 updateStatus:
 UPDATE syncableMessage
 SET sync_status = ?
+WHERE rowid = ?;
+
+updateStatusWithError:
+UPDATE syncableMessage
+SET sync_status = ?,
+    last_error = ?
 WHERE rowid = ?;
 
 lastId:

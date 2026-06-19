@@ -14,10 +14,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val storage = SettingsStorage.create(this)
+        val repo = SyncableMessageRepository.create(this)
         val resources = this.resources
         setContent() {
             BudgetTheme {
-                settingsManagement(storage)
+                settingsManagement(storage, repo)
                 smsPermissionDialog(resources, storage)
             }
         }

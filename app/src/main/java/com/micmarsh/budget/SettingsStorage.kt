@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.PreferencesSerializer
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.lifecycle.ViewModel
@@ -24,12 +25,18 @@ import okio.sink
 import okio.source
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.URI
 import java.util.Date
 
 interface PhoneNumberStorage {
     fun getPhoneNumbers() : Flow<Set<String>>
     fun addPhoneNumber(number: String): Unit
     fun removePhoneNumber(number: String): Unit
+}
+
+interface ServerLocationStorage {
+    fun getServerLocation(): Flow<URI>
+    fun setServerLocation(uri: URI): Unit
 }
 
 interface SmsDialogStorage {
@@ -43,11 +50,11 @@ interface LastSyncDateStorage {
 }
 
 class SettingsStorage private constructor(val dataStore: DataStore<Preferences>)
-    : ViewModel(), PhoneNumberStorage, SmsDialogStorage, LastSyncDateStorage, TestStorage {
+    : ViewModel(), PhoneNumberStorage, SmsDialogStorage, LastSyncDateStorage, ServerLocationStorage, TestStorage {
     val PHONE_NUMBERS = stringSetPreferencesKey("phone_numbers")
     var SHOW_SMS_SETTINGS_DIALOG = booleanPreferencesKey("show_sms_dialog")
     val LAST_SYNC_DATE_LONG = longPreferencesKey("last_sync_date")
-
+    val SERVER_LOCATION = stringPreferencesKey("server_location")
 
     override fun getPhoneNumbers() : Flow<Set<String>>{
         return dataStore.data.map { it[PHONE_NUMBERS] ?: setOf() }
@@ -101,6 +108,18 @@ class SettingsStorage private constructor(val dataStore: DataStore<Preferences>)
         dataStore.updateData { it.toMutablePreferences().also { preferences ->
             preferences[LAST_SYNC_DATE_LONG] = date.time
         } }
+    }
+
+    override fun getServerLocation(): Flow<URI> {
+       return dataStore.data.map { URI(it[SERVER_LOCATION]) }
+    }
+
+    override fun setServerLocation(uri: URI) {
+        viewModelScope.launch {
+            dataStore.updateData { it.toMutablePreferences().also { preferences ->
+                preferences[SERVER_LOCATION] = uri.toString()
+            } }
+        }
     }
 
     companion object {

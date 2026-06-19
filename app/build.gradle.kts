@@ -47,6 +47,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.datastore.core)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.material3)
 
     implementation("androidx.datastore:datastore-preferences:1.2.1")
@@ -62,6 +63,7 @@ dependencies {
     implementation("org.http4k:http4k-format-jackson")
 
     implementation("app.cash.sqldelight:android-driver:2.3.2")
+    implementation("app.cash.sqldelight:coroutines-extensions:2.0.2")
 
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))

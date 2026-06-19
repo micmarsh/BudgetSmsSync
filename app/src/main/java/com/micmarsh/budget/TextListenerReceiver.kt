@@ -10,6 +10,7 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import kotlinx.coroutines.flow.first
 import org.http4k.client.OkHttp
 import org.http4k.core.Request
 import org.http4k.core.Method.POST
@@ -21,42 +22,58 @@ private val MESSAGE_SENDER = "sms_message_sender"
 private val MESSAGE_TIMESTAMP = "sms_message_date"
 private val MESSAGE_DB_ID = "sms_message_db_id"
 
-
 class TextListenerReceiver : SmsReceiver() {
     override fun runAction(context: Context, message: SmsMessage) {
-        val body = message.messageBody
-        val sender = message.originatingAddress ?: "unknown"
-        val timestamp = message.timestampMillis
-
-        val db = SyncableMessageRepository.create(context)
-        val insertedId = db.addUnsynced(sender, body, timestamp)
-
         val workerPayload = Data.Builder()
-            .putString(MESSAGE_BODY, body)
-            .putString(MESSAGE_SENDER, sender)
-            .putLong(MESSAGE_TIMESTAMP, timestamp)
-            .putLong(MESSAGE_DB_ID, insertedId)
+            .putString(MESSAGE_BODY, message.messageBody)
+            .putString(MESSAGE_SENDER, message.originatingAddress ?: "unknown")
+            .putLong(MESSAGE_TIMESTAMP, message.timestampMillis)
             .build()
 
-        val workRequest = OneTimeWorkRequestBuilder<ReceivedTextWorker>()
+        val syncWorkRequest = OneTimeWorkRequestBuilder<ReceivedTextWorker>()
             .setInputData(workerPayload)
-            .setConstraints(Constraints(requiredNetworkType = NetworkType.UNMETERED))
             .build()
 
-        WorkManager.getInstance(context).enqueue(workRequest)
+        WorkManager.getInstance(context).enqueue(syncWorkRequest)
     }
 }
 
-data class SyncInput(val message_text: String?)
 
 class ReceivedTextWorker(val context: Context, val params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val data = params.inputData
         val sender = data.getString(MESSAGE_SENDER)!!
+
+        val storage = SettingsStorage.create(context)
+
+        val phoneNumbers = storage.getPhoneNumbers().first()
+        if (!phoneNumbers.contains(sender)){
+            Log.d("RECEIVED TEXT", "$sender was not contained in set of allow phone numbers [${phoneNumbers.joinToString(", ")}]")
+            return Result.success();
+        }
+
         val body = data.getString(MESSAGE_BODY)!!
         val timestamp = data.getLong(MESSAGE_TIMESTAMP, -1) // todo error on this value?
-        val repo = SyncableMessageRepository.create(context)
 
+        val db = SyncableMessageRepository.create(context)
+        val insertedId = db.addUnsynced(sender, body, timestamp)
+
+        Log.d("RECEIVED TEXT", "Saved message to db, got id $insertedId, scheduling sync")
+        SyncTextWorker.scheduleSyncWork(body, insertedId, context)
+
+        return Result.success()
+    }
+}
+
+data class SyncInput(val message_text: String?)
+
+class SyncTextWorker(val context: Context, val params: WorkerParameters) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result {
+        val data = params.inputData
+        val body = data.getString(MESSAGE_BODY)!!
+        val id = data.getLong(MESSAGE_DB_ID, -1)
+
+        val repo = SyncableMessageRepository.create(context)
 
         val client = OkHttp()
 
@@ -65,20 +82,33 @@ class ReceivedTextWorker(val context: Context, val params: WorkerParameters) : C
             .with(bodyLens.of(SyncInput(body)))
 
         val response = client(request)
-        
+
+        Log.d("RECEIVED TEXT", "Response from server ${response.body.toString()}")
+
         if (response.status.successful){
-            repo.markSuccessful(data.getLong(MESSAGE_DB_ID, -1))
+            repo.markSuccessful(id)
             return Result.success()
         } else {
-            repo.markFailed(data.getLong(MESSAGE_DB_ID, -1))
-            return Result.retry() // todo retry policy in builder (and builder into own method)
+            repo.markFailed(id, response.body.toString())
+            return Result.failure() // todo retry policy in builder (and builder into own method)
         }
-
-        Log.i("TEST RESPONSE FROM SERVER", response.body.toString())
-
     }
 
     companion object {
+        fun scheduleSyncWork(body: String, id: Long, context: Context){
+            val workerPayload = Data.Builder()
+                .putString(MESSAGE_BODY, body)
+                .putLong(MESSAGE_DB_ID, id)
+                .build()
+
+            val syncWorkRequest = OneTimeWorkRequestBuilder<SyncTextWorker>()
+                .setInputData(workerPayload)
+                .setConstraints(Constraints(requiredNetworkType = NetworkType.UNMETERED))
+                .build()
+
+            WorkManager.getInstance(context).enqueue(syncWorkRequest)
+        }
+
         private val bodyLens = Jackson.autoBody<SyncInput>().toLens()
     }
 }

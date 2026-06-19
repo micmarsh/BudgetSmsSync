@@ -37,11 +37,12 @@ import android.content.res.Resources
 import com.micmarsh.budget.PhoneNumberStorage
 import com.micmarsh.budget.R
 import com.micmarsh.budget.SmsDialogStorage
+import com.micmarsh.budget.SyncableMessageRepository
 
 
 //todo argument to interface once done testing
 @Composable
-fun settingsManagement(storage: SettingsStorage) {
+fun settingsManagement(storage: SettingsStorage, repo: SyncableMessageRepository) {
     Scaffold { innerPadding ->
         Column(
             Modifier
@@ -50,7 +51,7 @@ fun settingsManagement(storage: SettingsStorage) {
         ) {
             Text(fontSize = 30.sp, text = "Settings")
             phoneNumberList(storage)
-
+            syncMessagesList(repo)
             TEST_logList(storage)
         }
     }
@@ -90,6 +91,12 @@ fun phoneNumberList(storage: PhoneNumberStorage) {
         textEntryRow(numberInput, storage)
         sourceNumberListView(storage)
     }
+}
+
+@Composable
+fun syncMessagesList(repo: SyncableMessageRepository){
+    val syncableMessages = repo.getAll().collectAsStateWithLifecycle(listOf())
+    
 }
 
 private val rowModifier = Modifier
