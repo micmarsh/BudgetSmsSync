@@ -34,11 +34,19 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import android.content.res.Resources
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material3.Icon
 import com.micmarsh.budget.PhoneNumberStorage
 import com.micmarsh.budget.R
 import com.micmarsh.budget.SmsDialogStorage
+import com.micmarsh.budget.SyncStatus
+import com.micmarsh.budget.SyncStatus.Failed
+import com.micmarsh.budget.SyncableMessage
 import com.micmarsh.budget.SyncableMessageRepository
-
 
 //todo argument to interface once done testing
 @Composable
@@ -52,7 +60,7 @@ fun settingsManagement(storage: SettingsStorage, repo: SyncableMessageRepository
             Text(fontSize = 30.sp, text = "Settings")
             phoneNumberList(storage)
             syncMessagesList(repo)
-            TEST_logList(storage)
+            //TEST_logList(storage)
         }
     }
 }
@@ -95,9 +103,34 @@ fun phoneNumberList(storage: PhoneNumberStorage) {
 
 @Composable
 fun syncMessagesList(repo: SyncableMessageRepository){
-    val syncableMessages = repo.getAll().collectAsStateWithLifecycle(listOf())
-    
+    val baseModifier = rowModifier.wrapContentHeight(align = Alignment.CenterVertically)
+    val syncableMessages = repo.getAll().collectAsStateWithLifecycle(listOf()).value
+
+    LazyColumn {
+        items(items = syncableMessages) {item ->
+            val modifier = if (isFailed(item))
+                baseModifier.combinedClickable(
+                    onLongClick = {
+                       // storage.removePhoneNumber(item)
+                        //todo dialog with confirm and cancel, confirm resends (need to figure out how to inject that or w/e)
+                    },
+                    onClick = {})
+                else baseModifier
+
+            Row(modifier){
+                Text(item.body)
+                Spacer(Modifier.weight(1f))
+                Icon(when (item.sync_status) {
+                    SyncStatus.Failed.value -> Icons.Filled.Cancel
+                    SyncStatus.Successful.value -> Icons.Filled.Check
+                    else -> Icons.Filled.AccessTime
+                }, null)
+            }
+        }
+    }
 }
+
+private fun isFailed(item: SyncableMessage): Boolean = (item.sync_status ?: 0) == Failed.value.toLong()
 
 private val rowModifier = Modifier
     .fillMaxWidth()

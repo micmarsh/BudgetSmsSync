@@ -52,7 +52,7 @@ class SyncableMessageRepository(val database: Database) {
     }
 }
 
-enum class SyncStatus(val value: Int) {
+enum class SyncStatus(val value: Long) {
     Pending(1),
     Successful(2),
     Failed(3)
